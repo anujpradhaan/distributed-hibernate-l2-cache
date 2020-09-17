@@ -11,10 +11,7 @@ import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cache.spi.TimestampsRegion;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cfg.Settings;
-
 import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
-import redis.clients.jedis.Protocol;
 import upgrad.hibernate.cache.region.collection.JedisCollectionRegion;
 import upgrad.hibernate.cache.region.entity.JedisEntityRegion;
 import upgrad.hibernate.cache.region.naturalid.JedisNaturalIdRegion;
@@ -41,10 +38,7 @@ public class JedisRegionFactory implements RegionFactory {
 		this.settings = settings;
 		this.properties = properties;
 		log.info("Initializing Jedis with properties {}", properties);
-		this.pool = new JedisPool(new JedisPoolConfig(), properties.getProperty("redis.host", "localhost"),
-				Integer.valueOf(properties.getProperty("redis.port", String.valueOf(Protocol.DEFAULT_PORT))),
-				Integer.valueOf(properties.getProperty("redis.timeout", String.valueOf(Protocol.DEFAULT_TIMEOUT))),
-				properties.getProperty("redis.password", null));
+		this.pool = JedisConnectionFactory.getJedisPool(properties);
 	}
 
 	@Override
@@ -94,6 +88,7 @@ public class JedisRegionFactory implements RegionFactory {
 	}
 
 	private JedisCache getRedisCache(String regionName) {
+		log.debug("Creating a connection Pool for region:{}", regionName);
 		return new JedisCacheImpl(pool, regionName);
 	}
 

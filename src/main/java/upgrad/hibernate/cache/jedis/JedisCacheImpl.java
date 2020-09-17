@@ -87,12 +87,6 @@ public class JedisCacheImpl implements JedisCache {
 		return this.regionName;
 	}
 
-	@Override
-	public void destroy() {
-		//jedis.close();
-		//jedisPool.returnResource(jedis);
-	}
-
 	private byte[] serializeObject(Object obj) {
 		SerializingConverter sc = new SerializingConverter();
 		return sc.convert(obj);
@@ -132,7 +126,7 @@ public class JedisCacheImpl implements JedisCache {
 				logger.error(key.toString(), e);
 				lockFlag = false;
 			} finally {
-				jedis.close();
+				jedisPool.close();
 			}
 			logger.info("{} is now locking and waiting for unlock", key.toString());
 			timeout -= 100;

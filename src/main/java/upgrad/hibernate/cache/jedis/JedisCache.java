@@ -14,8 +14,6 @@ public interface JedisCache {
 
 	void remove(Object key) throws CacheException;
 
-	void destroy();
-
     boolean lock(Object key, Integer expireMsecs) throws InterruptedException;
 
     void unlock(Object key);
