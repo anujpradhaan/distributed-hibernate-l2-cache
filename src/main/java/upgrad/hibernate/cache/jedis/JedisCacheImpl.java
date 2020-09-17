@@ -126,7 +126,7 @@ public class JedisCacheImpl implements JedisCache {
 				logger.error(key.toString(), e);
 				lockFlag = false;
 			} finally {
-				jedisPool.close();
+				jedis.close();
 			}
 			logger.info("{} is now locking and waiting for unlock", key.toString());
 			timeout -= 100;
