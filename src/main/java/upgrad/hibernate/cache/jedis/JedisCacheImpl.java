@@ -11,135 +11,151 @@ import redis.clients.jedis.exceptions.JedisConnectionException;
 
 public class JedisCacheImpl implements JedisCache {
 
-    private JedisPool jedisPool;
+	private JedisPool jedisPool;
 
-    private Jedis jedis;
+	private String regionName;
 
-    private String regionName;
+	private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+	public JedisCacheImpl(JedisPool jedisPool, String regionName) {
+		this.jedisPool = jedisPool;
+		this.regionName = regionName;
+		//this.jedis = jedisPool.getResource();
+	}
 
-    public JedisCacheImpl(JedisPool jedisPool, String regionName) {
-        this.jedisPool = jedisPool;
-        this.regionName = regionName;
-        this.jedis = jedisPool.getResource();
-    }
+	@Override
+	public Object get(Object key) throws CacheException {
+		Object o = null;
+		byte[] k = serializeObject(key.toString());
+		Jedis jedis = jedisPool.getResource();
+		try {
+			byte[] v = jedis.get(k);
+			if (v != null && v.length > 0) {
+				o = deserializeObject(v);
+			}
+			return o;
+		} catch (JedisConnectionException e) {
+			logger.error(key.toString(), e);
+		} finally {
+			jedis.close();
+		}
+		return null;
+	}
 
-    @Override
-    public Object get(Object key) throws CacheException {
-        Object o = null;
-        byte[] k = serializeObject(key.toString());
-        try {
-            byte[] v = jedis.get(k);
-            if (v != null && v.length > 0) {
-                o = deserializeObject(v);
-            }
-            return o;
-        } catch (JedisConnectionException e) {
-            logger.error(key.toString(), e);
-        }
-        return null;
-    }
+	@Override
+	public void put(Object key, Object value) throws CacheException {
+		byte[] k = serializeObject(key.toString());
+		byte[] v = serializeObject(value);
+		Jedis jedis = jedisPool.getResource();
+		try {
+			jedis.set(k, v);
+		} catch (JedisConnectionException e) {
+			logger.error(key.toString(), e);
+		} finally {
+			jedis.close();
+		}
+	}
 
-    @Override
-    public void put(Object key, Object value) throws CacheException {
-        byte[] k = serializeObject(key.toString());
-        byte[] v = serializeObject(value);
+	@Override
+	public void remove(Object key) throws CacheException {
+		Jedis jedis = jedisPool.getResource();
+		try {
+			jedis.del(serializeObject(key.toString()));
+		} catch (JedisConnectionException e) {
+			logger.error(key.toString(), e);
+		} finally {
+			jedis.close();
+		}
+	}
 
-        try {
-            jedis.set(k, v);
-        } catch (JedisConnectionException e) {
-            logger.error(key.toString(), e);
-        }
-    }
+	@Override
+	public boolean exists(String key) {
+		boolean exists = false;
+		Jedis jedis = jedisPool.getResource();
+		try {
+			exists = jedis.exists(serializeObject(key));
+		} catch (JedisConnectionException e) {
+			logger.error(key, e);
+		} finally {
+			jedis.close();
+		}
+		return exists;
+	}
 
-    @Override
-    public void remove(Object key) throws CacheException {
-        try {
-            jedis.del(serializeObject(key.toString()));
-        } catch (JedisConnectionException e) {
-            logger.error(key.toString(), e);
-        }
-    }
+	@Override
+	public String getRegionName() {
+		return this.regionName;
+	}
 
-    @Override
-    public boolean exists(String key) {
-        try {
-            return jedis.exists(serializeObject(key));
-        } catch (JedisConnectionException e) {
-            logger.error(key, e);
-        }
-        return false;
-    }
+	@Override
+	public void destroy() {
+		//jedis.close();
+		//jedisPool.returnResource(jedis);
+	}
 
-    @Override
-    public String getRegionName() {
-        return this.regionName;
-    }
+	private byte[] serializeObject(Object obj) {
+		SerializingConverter sc = new SerializingConverter();
+		return sc.convert(obj);
+	}
 
-    @Override
-    public void destroy() {
-        //jedisPool.returnResource(jedis);
-    }
+	private Object deserializeObject(byte[] b) {
+		DeserializingConverter dc = new DeserializingConverter();
+		return dc.convert(b);
+	}
 
-    private byte[] serializeObject(Object obj) {
-        SerializingConverter sc = new SerializingConverter();
-        return sc.convert(obj);
-    }
+	public boolean lock(Object key, Integer expireMsecs) throws InterruptedException {
 
-    private Object deserializeObject(byte[] b) {
-        DeserializingConverter dc = new DeserializingConverter();
-        return dc.convert(b);
-    }
+		String lockKey = generateLockKey(key);
+		long expires = System.currentTimeMillis() + expireMsecs + 1;
+		String expiresStr = String.valueOf(expires);
+		long timeout = expireMsecs;
+		boolean lockFlag = false;
+		Jedis jedis = jedisPool.getResource();
+		while (timeout >= 0) {
+			try {
+				if (jedis.setnx(lockKey, expiresStr) == 1) {
+					lockFlag = true;
+				} else {
 
-    public boolean lock(Object key, Integer expireMsecs) throws InterruptedException {
+					String currentValueStr = jedis.get(lockKey);
+					if (currentValueStr != null && Long.parseLong(currentValueStr) < System.currentTimeMillis()) {
+						// lock is expired
 
-        String lockKey = generateLockKey(key);
-        long expires = System.currentTimeMillis() + expireMsecs + 1;
-        String expiresStr = String.valueOf(expires);
-        long timeout = expireMsecs;
+						String oldValueStr = jedis.getSet(lockKey, expiresStr);
+						if (oldValueStr != null && oldValueStr.equals(currentValueStr)) {
+							// lock acquired
+							return true;
+						}
+					}
+				}
+			} catch (JedisConnectionException e) {
+				logger.error(key.toString(), e);
+				lockFlag = false;
+			} finally {
+				jedis.close();
+			}
+			logger.info("{} is now locking and waiting for unlock", key.toString());
+			timeout -= 100;
+			Thread.sleep(100);
+		}
+		return lockFlag;
+	}
 
-        while (timeout >= 0) {
+	@Override
+	public void unlock(Object key) {
+		Jedis jedis = jedisPool.getResource();
+		try {
+			jedis.del(generateLockKey(key));
+		} finally {
+			jedis.close();
+		}
+	}
 
-            try {
-                if (jedis.setnx(lockKey, expiresStr) == 1) {
-                    return true;
-                }
-
-                String currentValueStr = jedis.get(lockKey);
-                if (currentValueStr != null && Long.parseLong(currentValueStr) < System.currentTimeMillis()) {
-                    // lock is expired
-
-                    String oldValueStr = jedis.getSet(lockKey, expiresStr);
-                    if (oldValueStr != null && oldValueStr.equals(currentValueStr)) {
-                        // lock acquired
-                        return true;
-                    }
-                }
-            } catch (JedisConnectionException e) {
-                logger.error(key.toString(), e);
-                return false;
-            }
-            logger.info("{} is now locking and waiting for unlock", key.toString());
-            timeout -= 100;
-            Thread.sleep(100);
-        }
-        return false;
-    }
-
-    @Override
-    public void unlock(Object key) {
-        jedis.del(generateLockKey(key));
-    }
-
-    private String generateLockKey(Object key) {
-
-        if (null == key) {
-            throw new IllegalArgumentException("key must not be null");
-        }
-
-        return key.toString() + ".lock";
-    }
-
+	private String generateLockKey(Object key) {
+		if (null == key) {
+			throw new IllegalArgumentException("key must not be null");
+		}
+		return key.toString() + ".lock";
+	}
 
 }
