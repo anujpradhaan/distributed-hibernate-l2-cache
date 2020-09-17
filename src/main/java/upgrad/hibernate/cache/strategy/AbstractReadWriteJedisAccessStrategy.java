@@ -16,9 +16,6 @@ public abstract class AbstractReadWriteJedisAccessStrategy<T extends JedisTransa
 
     private final Comparator versionComparator;
 
-    /**
-     * Create an access strategy wrapping the given region.
-     */
     protected AbstractReadWriteJedisAccessStrategy(T region, Settings settings) {
         super(region, settings);
         this.versionComparator = region.getCacheDataDescription().getVersionComparator();
@@ -50,9 +47,6 @@ public abstract class AbstractReadWriteJedisAccessStrategy<T extends JedisTransa
         return false;
     }
 
-    /**
-     * Returns <code>false</code> since this is a read/write cache access strategy
-     */
     public boolean insert(Object key, Object value, Object version) throws CacheException {
         return false;
     }
@@ -73,9 +67,6 @@ public abstract class AbstractReadWriteJedisAccessStrategy<T extends JedisTransa
         return false;
     }
 
-    /**
-     * Returns <code>false</code> since this is a read/write cache access strategy
-     */
     public boolean update(Object key, Object value, Object currentVersion, Object previousVersion) throws CacheException {
         return false;
     }

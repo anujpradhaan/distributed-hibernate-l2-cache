@@ -40,41 +40,26 @@ public class NonStrictReadWriteJedisEntityRegionAccessStrategy extends AbstractJ
 		}
 	}
 
-	/**
-	 * Since this is a non-strict read/write strategy item locking is not used.
-	 */
 	@Override
 	public SoftLock lockItem(Object key, Object version) throws CacheException {
 		return null;
 	}
 
-	/**
-	 * Since this is a non-strict read/write strategy item locking is not used.
-	 */
 	@Override
 	public void unlockItem(Object key, SoftLock lock) throws CacheException {
 		region.remove(key);
 	}
 
-	/**
-	 * Returns <code>false</code> since this is an asynchronous cache access strategy.
-	 */
 	@Override
 	public boolean insert(Object key, Object value, Object version) throws CacheException {
 		return false;
 	}
 
-	/**
-	 * Returns <code>false</code> since this is a non-strict read/write cache access strategy
-	 */
 	@Override
 	public boolean afterInsert(Object key, Object value, Object version) throws CacheException {
 		return false;
 	}
 
-	/**
-	 * Removes the entry since this is a non-strict read/write cache strategy.
-	 */
 	@Override
 	public boolean update(Object key, Object value, Object currentVersion, Object previousVersion) throws CacheException {
 		log.debug("called update by K:{}, V:{}", key, value);
@@ -82,17 +67,11 @@ public class NonStrictReadWriteJedisEntityRegionAccessStrategy extends AbstractJ
 		return false;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public boolean afterUpdate(Object key, Object value, Object currentVersion, Object previousVersion, SoftLock lock) throws CacheException {
 		return false;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public void remove(Object key) throws CacheException {
 		cache.remove(key);

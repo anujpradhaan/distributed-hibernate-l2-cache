@@ -8,17 +8,9 @@ import org.hibernate.cfg.Settings;
 import upgrad.hibernate.cache.region.naturalid.JedisNaturalIdRegion;
 import upgrad.hibernate.cache.strategy.AbstractReadWriteJedisAccessStrategy;
 
-/**
- * User: jtlee
- * Date: 3/5/13
- * Time: 2:52 PM
- */
 public class ReadWriteJedisNaturalIdRegionAcessStrategy extends AbstractReadWriteJedisAccessStrategy<JedisNaturalIdRegion> implements
         NaturalIdRegionAccessStrategy {
 
-    /**
-     * Create an access strategy wrapping the given region.
-     */
     public ReadWriteJedisNaturalIdRegionAcessStrategy(JedisNaturalIdRegion region, Settings settings) {
         super(region, settings);
     }
@@ -54,6 +46,4 @@ public class ReadWriteJedisNaturalIdRegionAcessStrategy extends AbstractReadWrit
     public void unlockItem(Object key, SoftLock lock) throws CacheException {
         //Do not support client side lock
     }
-
-
 }

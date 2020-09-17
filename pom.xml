@@ -62,8 +62,8 @@
         </repository>
     </distributionManagement>
     <scm>
-        <connection>scm:git@bitbucket.org:anujpradhan/custom-hibernate-redis.git</connection>
-        <developerConnection>scm:git@bitbucket.org:anujpradhan/custom-hibernate-redis.git</developerConnection>
+        <connection>scm:git:git@bitbucket.org:anujpradhan/custom-hibernate-redis.git</connection>
+        <developerConnection>scm:git:git@bitbucket.org:anujpradhan/custom-hibernate-redis.git</developerConnection>
         <tag>custom-hibernate-redis-0.0.1</tag>
     </scm>
 </project>

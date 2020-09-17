@@ -17,26 +17,17 @@ public class ReadOnlyJedisCollectionRegionAccessStrategy extends AbstractJedisAc
 		super(region, settings);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public CollectionRegion getRegion() {
 		return region;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public Object get(Object key, long txTimestamp) throws CacheException {
 		log.debug("called get by K:{}", key);
 		return cache.get(key);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public boolean putFromLoad(Object key, Object value, long txTimestamp, Object version, boolean minimalPutOverride)
 			throws CacheException {
@@ -49,19 +40,11 @@ public class ReadOnlyJedisCollectionRegionAccessStrategy extends AbstractJedisAc
 		}
 	}
 
-	/**
-	 * Throws UnsupportedOperationException since this cache is read-only
-	 *
-	 * @throws UnsupportedOperationException always
-	 */
 	@Override
 	public SoftLock lockItem(Object key, Object version) throws UnsupportedOperationException {
 		throw new UnsupportedOperationException("Can't write to a readonly object");
 	}
 
-	/**
-	 * A no-op since this cache is read-only
-	 */
 	@Override
 	public void unlockItem(Object key, SoftLock lock) throws CacheException {
 	}

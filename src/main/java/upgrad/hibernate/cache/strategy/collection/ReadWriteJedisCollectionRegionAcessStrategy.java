@@ -15,9 +15,6 @@ import upgrad.hibernate.cache.strategy.AbstractReadWriteJedisAccessStrategy;
  */
 public class ReadWriteJedisCollectionRegionAcessStrategy extends AbstractReadWriteJedisAccessStrategy<JedisCollectionRegion> implements CollectionRegionAccessStrategy {
 
-    /**
-     * Create an access strategy wrapping the given region.
-     */
     public ReadWriteJedisCollectionRegionAcessStrategy(JedisCollectionRegion region, Settings settings) {
         super(region, settings);
     }

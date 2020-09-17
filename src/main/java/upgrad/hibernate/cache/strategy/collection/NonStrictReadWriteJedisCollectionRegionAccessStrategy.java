@@ -29,9 +29,6 @@ public class NonStrictReadWriteJedisCollectionRegionAccessStrategy extends Abstr
 		return cache.get(key);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	public boolean putFromLoad(Object key, Object value, long txTimestamp, Object version, boolean minimalPutOverride)
 			throws CacheException {
 		log.debug("called putFromLoad by K:{}, V:{}", key, value);
@@ -43,24 +40,15 @@ public class NonStrictReadWriteJedisCollectionRegionAccessStrategy extends Abstr
 		}
 	}
 
-	/**
-	 * Since this is a non-strict read/write strategy item locking is not used.
-	 */
 	public SoftLock lockItem(Object key, Object version) throws CacheException {
 		return null;
 	}
 
-	/**
-	 * Since this is a non-strict read/write strategy item locking is not used.
-	 */
 	public void unlockItem(Object key, SoftLock lock) throws CacheException {
 //		LOG.debug("called unlockItem K:{}", key);
 //		region.remove(key);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public void remove(Object key) throws CacheException {
 		log.debug("called remove K:{}", key);

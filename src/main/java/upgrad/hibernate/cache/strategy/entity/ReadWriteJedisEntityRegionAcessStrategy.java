@@ -8,20 +8,11 @@ import org.hibernate.cfg.Settings;
 import upgrad.hibernate.cache.region.entity.JedisEntityRegion;
 import upgrad.hibernate.cache.strategy.AbstractReadWriteJedisAccessStrategy;
 
-/**
- * User: jtlee
- * Date: 3/5/13
- * Time: 2:52 PM
- */
 public class ReadWriteJedisEntityRegionAcessStrategy extends AbstractReadWriteJedisAccessStrategy<JedisEntityRegion> implements EntityRegionAccessStrategy {
 
-    /**
-     * Create an access strategy wrapping the given region.
-     */
     public ReadWriteJedisEntityRegionAcessStrategy(JedisEntityRegion region, Settings settings) {
         super(region, settings);
     }
-
 
 
     @Override
@@ -39,6 +30,5 @@ public class ReadWriteJedisEntityRegionAcessStrategy extends AbstractReadWriteJe
     public EntityRegion getRegion() {
         return region;
     }
-
 
 }
