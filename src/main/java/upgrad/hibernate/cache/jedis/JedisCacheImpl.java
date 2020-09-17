@@ -104,8 +104,8 @@ public class JedisCacheImpl implements JedisCache {
 		String expiresStr = String.valueOf(expires);
 		long timeout = expireMsecs;
 		boolean lockFlag = false;
-		Jedis jedis = jedisPool.getResource();
 		while (timeout >= 0) {
+			Jedis jedis = jedisPool.getResource();
 			try {
 				if (jedis.setnx(lockKey, expiresStr) == 1) {
 					lockFlag = true;
