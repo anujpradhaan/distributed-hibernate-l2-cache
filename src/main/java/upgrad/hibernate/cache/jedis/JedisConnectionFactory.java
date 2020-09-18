@@ -14,12 +14,9 @@ public class JedisConnectionFactory {
 
 	public static JedisPool getJedisPool(Properties properties) {
 		GenericObjectPoolConfig jedisPoolConfig = new GenericObjectPoolConfig();
-		jedisPoolConfig.setMaxTotal(50);
-		jedisPoolConfig.setMaxIdle(30);
-		jedisPoolConfig.setMinIdle(20);
-		jedisPoolConfig.setTestOnBorrow(true);
-		jedisPoolConfig.setTestOnReturn(true);
-		jedisPoolConfig.setTestWhileIdle(true);
+		jedisPoolConfig.setMaxTotal(100);
+		jedisPoolConfig.setMaxIdle(100);
+		jedisPoolConfig.setMinIdle(50);
 		jedisPoolConfig.setMinEvictableIdleTimeMillis(Duration.ofSeconds(60).toMillis());
 		jedisPoolConfig.setTimeBetweenEvictionRunsMillis(Duration.ofSeconds(30).toMillis());
 		jedisPoolConfig.setNumTestsPerEvictionRun(3);
