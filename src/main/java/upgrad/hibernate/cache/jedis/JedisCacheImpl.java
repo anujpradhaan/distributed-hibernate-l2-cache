@@ -107,7 +107,6 @@ public class JedisCacheImpl implements JedisCache {
 			Jedis jedis = jedisPool.getResource();
 			try {
 				if (jedis.setnx(lockKey, expiresStr) == 1) {
-					jedis.close();
 					return true;
 				}
 
@@ -118,13 +117,11 @@ public class JedisCacheImpl implements JedisCache {
 					String oldValueStr = jedis.getSet(lockKey, expiresStr);
 					if (oldValueStr != null && oldValueStr.equals(currentValueStr)) {
 						// lock acquired
-						jedis.close();
 						return true;
 					}
 				}
 			} catch (JedisConnectionException e) {
 				logger.error("Error while locking", e);
-				jedis.close();
 				return false;
 			} finally {
 				jedis.close();
