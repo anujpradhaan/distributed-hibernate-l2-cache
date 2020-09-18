@@ -12,7 +12,23 @@ import java.util.Properties;
  **/
 public class JedisConnectionFactory {
 
-	public static JedisPool getJedisPool(Properties properties) {
+	public static JedisPool getWriteJedisPool(Properties properties) {
+		GenericObjectPoolConfig jedisPoolConfig = getJedisPoolConfig(properties);
+		return new JedisPool(jedisPoolConfig, properties.getProperty("redis.host", "localhost"),
+				Integer.valueOf(properties.getProperty("redis.port", String.valueOf(Protocol.DEFAULT_PORT))),
+				Integer.valueOf(properties.getProperty("redis.timeout", String.valueOf(Protocol.DEFAULT_TIMEOUT))),
+				properties.getProperty("redis.password", null));
+	}
+
+	public static JedisPool getReadJedisPool(Properties properties) {
+		GenericObjectPoolConfig jedisPoolConfig = getJedisPoolConfig(properties);
+		return new JedisPool(jedisPoolConfig, properties.getProperty("redis.read.host", "localhost"),
+				Integer.valueOf(properties.getProperty("redis.port", String.valueOf(Protocol.DEFAULT_PORT))),
+				Integer.valueOf(properties.getProperty("redis.timeout", String.valueOf(Protocol.DEFAULT_TIMEOUT))),
+				properties.getProperty("redis.password", null));
+	}
+
+	private static GenericObjectPoolConfig getJedisPoolConfig(Properties properties) {
 		GenericObjectPoolConfig jedisPoolConfig = new GenericObjectPoolConfig();
 		jedisPoolConfig.setMaxTotal(100);
 		jedisPoolConfig.setMaxIdle(100);
@@ -21,9 +37,6 @@ public class JedisConnectionFactory {
 		jedisPoolConfig.setTimeBetweenEvictionRunsMillis(Duration.ofSeconds(30).toMillis());
 		jedisPoolConfig.setNumTestsPerEvictionRun(3);
 		jedisPoolConfig.setBlockWhenExhausted(true);
-		return new JedisPool(jedisPoolConfig, properties.getProperty("redis.host", "localhost"),
-				Integer.valueOf(properties.getProperty("redis.port", String.valueOf(Protocol.DEFAULT_PORT))),
-				Integer.valueOf(properties.getProperty("redis.timeout", String.valueOf(Protocol.DEFAULT_TIMEOUT))),
-				properties.getProperty("redis.password", null));
+		return jedisPoolConfig;
 	}
 }

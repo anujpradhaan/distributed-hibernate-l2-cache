@@ -38,7 +38,7 @@ public class JedisRegionFactory implements RegionFactory {
 		this.settings = settings;
 		this.properties = properties;
 		log.info("Initializing Jedis with properties {}", properties);
-		this.pool = JedisConnectionFactory.getJedisPool(properties);
+		this.pool = JedisConnectionFactory.getWriteJedisPool(properties);
 	}
 
 	@Override
