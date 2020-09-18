@@ -11,23 +11,25 @@ import redis.clients.jedis.exceptions.JedisConnectionException;
 
 public class JedisCacheImpl implements JedisCache {
 
-	private JedisPool jedisPool;
+	private JedisPool writeJedisPool;
+
+	private JedisPool readJedisPool;
 
 	private String regionName;
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
-	public JedisCacheImpl(JedisPool jedisPool, String regionName) {
-		this.jedisPool = jedisPool;
+	public JedisCacheImpl(JedisPool writeJedisPool, JedisPool readJedisPool, String regionName) {
+		this.writeJedisPool = writeJedisPool;
+		this.readJedisPool = readJedisPool;
 		this.regionName = regionName;
-		//this.jedis = jedisPool.getResource();
 	}
 
 	@Override
 	public Object get(Object key) throws CacheException {
 		Object o = null;
 		byte[] k = serializeObject(key.toString());
-		Jedis jedis = jedisPool.getResource();
+		Jedis jedis = readJedisPool.getResource();
 		try {
 			byte[] v = jedis.get(k);
 			if (v != null && v.length > 0) {
@@ -46,7 +48,7 @@ public class JedisCacheImpl implements JedisCache {
 	public void put(Object key, Object value) throws CacheException {
 		byte[] k = serializeObject(key.toString());
 		byte[] v = serializeObject(value);
-		Jedis jedis = jedisPool.getResource();
+		Jedis jedis = writeJedisPool.getResource();
 		try {
 			jedis.set(k, v);
 		} catch (JedisConnectionException e) {
@@ -58,7 +60,7 @@ public class JedisCacheImpl implements JedisCache {
 
 	@Override
 	public void remove(Object key) throws CacheException {
-		Jedis jedis = jedisPool.getResource();
+		Jedis jedis = writeJedisPool.getResource();
 		try {
 			jedis.del(serializeObject(key.toString()));
 		} catch (JedisConnectionException e) {
@@ -71,7 +73,7 @@ public class JedisCacheImpl implements JedisCache {
 	@Override
 	public boolean exists(String key) {
 		boolean exists = false;
-		Jedis jedis = jedisPool.getResource();
+		Jedis jedis = readJedisPool.getResource();
 		try {
 			exists = jedis.exists(serializeObject(key));
 		} catch (JedisConnectionException e) {
@@ -104,7 +106,7 @@ public class JedisCacheImpl implements JedisCache {
 		String expiresStr = String.valueOf(expires);
 		long timeout = expireMsecs;
 		while (timeout >= 0) {
-			Jedis jedis = jedisPool.getResource();
+			Jedis jedis = writeJedisPool.getResource();
 			try {
 				if (jedis.setnx(lockKey, expiresStr) == 1) {
 					return true;
@@ -135,7 +137,7 @@ public class JedisCacheImpl implements JedisCache {
 
 	@Override
 	public void unlock(Object key) {
-		Jedis jedis = jedisPool.getResource();
+		Jedis jedis = writeJedisPool.getResource();
 		try {
 			jedis.del(generateLockKey(key));
 		} finally {

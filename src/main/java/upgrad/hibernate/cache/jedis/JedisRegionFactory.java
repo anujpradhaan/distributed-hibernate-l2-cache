@@ -23,27 +23,28 @@ import java.util.Properties;
 @Slf4j
 public class JedisRegionFactory implements RegionFactory {
 
-	private JedisPool pool;
+	private JedisPool writePool;
+	private JedisPool readPool;
 
 	private Properties properties;
 
 	private Settings settings;
-
-	//	public JedisRegionFactory(Properties properties) {
-	//		this.properties = properties;
-	//	}
 
 	@Override
 	public void start(Settings settings, Properties properties) throws CacheException {
 		this.settings = settings;
 		this.properties = properties;
 		log.info("Initializing Jedis with properties {}", properties);
-		this.pool = JedisConnectionFactory.getWriteJedisPool(properties);
+		this.writePool = JedisConnectionFactory.getWriteJedisPool(properties);
+		this.readPool = JedisConnectionFactory.getReadJedisPool(properties);
 	}
 
 	@Override
 	public void stop() {
-		this.pool.destroy();
+		this.writePool.destroy();
+		if (!readPool.equals(writePool)) {
+			this.readPool.destroy();
+		}
 	}
 
 	@Override
@@ -89,7 +90,7 @@ public class JedisRegionFactory implements RegionFactory {
 
 	private JedisCache getRedisCache(String regionName) {
 		log.debug("Creating a connection Pool for region:{}", regionName);
-		return new JedisCacheImpl(pool, regionName);
+		return new JedisCacheImpl(writePool, readPool, regionName);
 	}
 
 }
