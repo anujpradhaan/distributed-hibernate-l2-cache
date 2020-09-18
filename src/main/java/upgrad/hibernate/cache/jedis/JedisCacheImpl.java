@@ -103,28 +103,29 @@ public class JedisCacheImpl implements JedisCache {
 		long expires = System.currentTimeMillis() + expireMsecs + 1;
 		String expiresStr = String.valueOf(expires);
 		long timeout = expireMsecs;
-		boolean lockFlag = false;
 		while (timeout >= 0) {
 			Jedis jedis = jedisPool.getResource();
 			try {
 				if (jedis.setnx(lockKey, expiresStr) == 1) {
-					lockFlag = true;
-				} else {
+					jedis.close();
+					return true;
+				}
 
-					String currentValueStr = jedis.get(lockKey);
-					if (currentValueStr != null && Long.parseLong(currentValueStr) < System.currentTimeMillis()) {
-						// lock is expired
+				String currentValueStr = jedis.get(lockKey);
+				if (currentValueStr != null && Long.parseLong(currentValueStr) < System.currentTimeMillis()) {
+					// lock is expired
 
-						String oldValueStr = jedis.getSet(lockKey, expiresStr);
-						if (oldValueStr != null && oldValueStr.equals(currentValueStr)) {
-							// lock acquired
-							return true;
-						}
+					String oldValueStr = jedis.getSet(lockKey, expiresStr);
+					if (oldValueStr != null && oldValueStr.equals(currentValueStr)) {
+						// lock acquired
+						jedis.close();
+						return true;
 					}
 				}
 			} catch (JedisConnectionException e) {
-				logger.error(key.toString(), e);
-				lockFlag = false;
+				logger.error("Error while locking", e);
+				jedis.close();
+				return false;
 			} finally {
 				jedis.close();
 			}
@@ -132,7 +133,7 @@ public class JedisCacheImpl implements JedisCache {
 			timeout -= 100;
 			Thread.sleep(100);
 		}
-		return lockFlag;
+		return false;
 	}
 
 	@Override
