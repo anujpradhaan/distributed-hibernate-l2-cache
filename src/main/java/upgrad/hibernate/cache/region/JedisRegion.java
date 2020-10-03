@@ -70,16 +70,39 @@ public abstract class JedisRegion implements Region {
 
 	@Override
 	public boolean contains(Object key) {
+		long startTime = System.currentTimeMillis();
+		boolean contains = containsWithTime(key);
+		long endTime = System.currentTimeMillis();
+		log.debug("Time elapsed to check of key exists in redis={} ms", endTime - startTime);
+		return contains;
+	}
+
+	private boolean containsWithTime(Object key) {
 		log.debug("Checking if key exists:{}", key.toString());
 		return cache.exists(key.toString());
 	}
 
 	public Object get(Object key) {
+		long startTime = System.currentTimeMillis();
+		Object value = getWithTime(key);
+		long endTime = System.currentTimeMillis();
+		log.debug("Time elapsed to get value from redis={} ms", endTime - startTime);
+		return value;
+	}
+
+	private Object getWithTime(Object key) {
 		log.debug("Getting value for key:{}", key.toString());
 		return cache.get(key);
 	}
 
 	public void put(Object key, Object value) {
+		long startTime = System.currentTimeMillis();
+		putWithTime(key, value);
+		long endTime = System.currentTimeMillis();
+		log.debug("Time elapsed to update in redis={} ms", endTime - startTime);
+	}
+
+	private void putWithTime(Object key, Object value) {
 		log.debug("Updating value for key:{} with value {}", key.toString(), value.toString());
 		cache.put(key, value);
 	}
@@ -91,13 +114,21 @@ public abstract class JedisRegion implements Region {
 
 	public boolean writeLock(Object key) {
 		try {
-			return cache.lock(key, getTimeout());
+			boolean lockAcquired = false;
+			long startTime = System.currentTimeMillis();
+			lockAcquired = cache.lock(key, getTimeout());
+			long endTime = System.currentTimeMillis();
+			log.debug("Time elapsed to lock in redis={} ms", endTime - startTime);
+			return lockAcquired;
 		} catch (InterruptedException e) {
 			return false;
 		}
 	}
 
 	public void releaseLock(Object key) {
+		long startTime = System.currentTimeMillis();
 		cache.unlock(key);
+		long endTime = System.currentTimeMillis();
+		log.debug("Time elapsed to unlock in redis={} ms", endTime - startTime);
 	}
 }

@@ -3,11 +3,12 @@ package upgrad.hibernate.cache.jedis;
 import org.hibernate.cache.CacheException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.serializer.support.DeserializingConverter;
-import org.springframework.core.serializer.support.SerializingConverter;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.exceptions.JedisConnectionException;
+import upgrad.hibernate.cache.serializer.RedisSerializer;
+import upgrad.hibernate.cache.serializer.SnappyRedisSerializer;
+import upgrad.hibernate.cache.serializer.StringRedisSerializer;
 
 public class JedisCacheImpl implements JedisCache {
 
@@ -16,6 +17,9 @@ public class JedisCacheImpl implements JedisCache {
 	private JedisPool readJedisPool;
 
 	private String regionName;
+
+	private final StringRedisSerializer keySerializer = new StringRedisSerializer();
+	private final RedisSerializer<Object> valueSerializer = new SnappyRedisSerializer<>();
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -89,24 +93,40 @@ public class JedisCacheImpl implements JedisCache {
 		return this.regionName;
 	}
 
+	private byte[] serializeKey(String key) {
+		return keySerializer.serialize(key);
+	}
+
+	private Object deserializeKey(byte[] b) {
+		return keySerializer.deserialize(b);
+	}
+
 	private byte[] serializeObject(Object obj) {
-		SerializingConverter sc = new SerializingConverter();
-		return sc.convert(obj);
+		return valueSerializer.serialize(obj);
 	}
 
 	private Object deserializeObject(byte[] b) {
-		DeserializingConverter dc = new DeserializingConverter();
-		return dc.convert(b);
+		return valueSerializer.deserialize(b);
 	}
 
+	/**
+	 * we’ll attempt to acquire the lock by using SETNX to set the value of the
+	 * lock’s key only if it doesn’t already exist. On failure, we’ll continue to attempt this
+	 * until we’ve run out of time (which defaults to 10 seconds).
+	 *
+	 * @param key
+	 * @param expireMsecs
+	 * @return
+	 * @throws InterruptedException
+	 */
 	public boolean lock(Object key, Integer expireMsecs) throws InterruptedException {
-
 		String lockKey = generateLockKey(key);
 		long expires = System.currentTimeMillis() + expireMsecs + 1;
 		String expiresStr = String.valueOf(expires);
 		long timeout = expireMsecs;
 		while (timeout >= 0) {
 			Jedis jedis = writeJedisPool.getResource();
+
 			try {
 				if (jedis.setnx(lockKey, expiresStr) == 1) {
 					return true;
