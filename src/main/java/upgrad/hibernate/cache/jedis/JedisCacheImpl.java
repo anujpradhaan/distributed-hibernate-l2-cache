@@ -3,6 +3,8 @@ package upgrad.hibernate.cache.jedis;
 import org.hibernate.cache.CacheException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.serializer.support.DeserializingConverter;
+import org.springframework.core.serializer.support.SerializingConverter;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.exceptions.JedisConnectionException;
@@ -101,13 +103,15 @@ public class JedisCacheImpl implements JedisCache {
 		return keySerializer.deserialize(b);
 	}
 
-	private byte[] serializeObject(Object obj) {
-		return valueSerializer.serialize(obj);
-	}
+    private byte[] serializeObject(Object obj) {
+        SerializingConverter sc = new SerializingConverter();
+        return sc.convert(obj);
+    }
 
-	private Object deserializeObject(byte[] b) {
-		return valueSerializer.deserialize(b);
-	}
+    private Object deserializeObject(byte[] b) {
+        DeserializingConverter dc = new DeserializingConverter();
+        return dc.convert(b);
+    }
 
 	/**
 	 * we’ll attempt to acquire the lock by using SETNX to set the value of the
