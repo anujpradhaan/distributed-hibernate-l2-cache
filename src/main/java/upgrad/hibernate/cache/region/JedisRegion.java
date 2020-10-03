@@ -73,7 +73,7 @@ public abstract class JedisRegion implements Region {
 		long startTime = System.currentTimeMillis();
 		boolean contains = containsWithTime(key);
 		long endTime = System.currentTimeMillis();
-		log.debug("Time elapsed to check of key exists in redis={} ms", endTime - startTime);
+		log.info("Time elapsed to check of key exists in redis={} ms", endTime - startTime);
 		return contains;
 	}
 
@@ -86,7 +86,7 @@ public abstract class JedisRegion implements Region {
 		long startTime = System.currentTimeMillis();
 		Object value = getWithTime(key);
 		long endTime = System.currentTimeMillis();
-		log.debug("Time elapsed to get value from redis={} ms", endTime - startTime);
+		log.info("Time elapsed to get value from redis={} ms", endTime - startTime);
 		return value;
 	}
 
@@ -99,7 +99,7 @@ public abstract class JedisRegion implements Region {
 		long startTime = System.currentTimeMillis();
 		putWithTime(key, value);
 		long endTime = System.currentTimeMillis();
-		log.debug("Time elapsed to update in redis={} ms", endTime - startTime);
+		log.info("Time elapsed to update in redis={} ms", endTime - startTime);
 	}
 
 	private void putWithTime(Object key, Object value) {
@@ -118,7 +118,7 @@ public abstract class JedisRegion implements Region {
 			long startTime = System.currentTimeMillis();
 			lockAcquired = cache.lock(key, getTimeout());
 			long endTime = System.currentTimeMillis();
-			log.debug("Time elapsed to lock in redis={} ms", endTime - startTime);
+			log.info("Time elapsed to lock in redis={} ms", endTime - startTime);
 			return lockAcquired;
 		} catch (InterruptedException e) {
 			return false;
@@ -129,6 +129,6 @@ public abstract class JedisRegion implements Region {
 		long startTime = System.currentTimeMillis();
 		cache.unlock(key);
 		long endTime = System.currentTimeMillis();
-		log.debug("Time elapsed to unlock in redis={} ms", endTime - startTime);
+		log.info("Time elapsed to unlock in redis={} ms", endTime - startTime);
 	}
 }
